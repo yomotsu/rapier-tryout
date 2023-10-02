@@ -33,7 +33,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.25;
 document.body.appendChild( renderer.domElement );
 
-loadEnvMap( renderer, '/env.jpg' ).then( ( envMapRenderTarget ) => {
+loadEnvMap( renderer, '/env.webp' ).then( ( envMapRenderTarget ) => {
 
 	scene.environment = envMapRenderTarget.texture;
 	scene.background = envMapRenderTarget.texture;
