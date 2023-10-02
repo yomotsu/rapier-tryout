@@ -29,11 +29,14 @@ camera.position.set( 0, 1, 3 );
 // camera.lookAt( 0, 0, 0 );
 const renderer = new THREE.WebGLRenderer( { stencil: false } );
 renderer.setSize( width, height );
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.25;
 document.body.appendChild( renderer.domElement );
 
-loadEnvMap( renderer ).then( ( envMapRenderTarget ) => {
+loadEnvMap( renderer, '/env.jpg' ).then( ( envMapRenderTarget ) => {
 
 	scene.environment = envMapRenderTarget.texture;
+	scene.background = envMapRenderTarget.texture;
 
 } );
 
@@ -64,6 +67,22 @@ const groundColliderDesc = RAPIER.ColliderDesc.cuboid(
 groundColliderDesc.setTranslation( groundMesh.position.x, groundMesh.position.y, groundMesh.position.z );
 groundColliderDesc.setRotation( new RAPIER.Quaternion( groundMesh.quaternion.x, groundMesh.quaternion.y, groundMesh.quaternion.z, groundMesh.quaternion.w ) );
 world.createCollider( groundColliderDesc, groundRigidBody );
+
+// barricade
+const barricadeMesh = ( await new GLTFLoader().loadAsync( '/barricade.glb' ) ).scene;
+scene.add( barricadeMesh );
+const barricadeRigidBodyDesc = RAPIER.RigidBodyDesc.dynamic();
+barricadeRigidBodyDesc.setTranslation( - 2, .4, -8 );
+const barricadeRigidBody = world.createRigidBody(barricadeRigidBodyDesc);
+const barricadeColliderDesc = RAPIER.ColliderDesc.cuboid(
+	1.20 / 2,
+	.8 / 2,
+	.3 / 2
+).setMass( 3 );
+barricadeColliderDesc.setTranslation( barricadeMesh.position.x, barricadeMesh.position.y, barricadeMesh.position.z );
+barricadeColliderDesc.setRotation( new RAPIER.Quaternion( barricadeMesh.quaternion.x, barricadeMesh.quaternion.y, barricadeMesh.quaternion.z, barricadeMesh.quaternion.w ) );
+world.createCollider( barricadeColliderDesc, barricadeRigidBody );
+
 
 const obstacleMesh = new THREE.Mesh(
 	new THREE.BoxGeometry( 5, 5, 5 ),
@@ -254,6 +273,9 @@ const updateCamera = ( delta: number ) => {
 	tireRearRightMesh.quaternion.copy( raycastVehicle.wheels[3].state.worldTransform.quaternion );
 	tireRearRightMesh.position.copy( raycastVehicle.wheels[3].state.worldTransform.position );
 
+	barricadeMesh.position.copy( barricadeRigidBody.translation() as THREE.Vector3 );
+	barricadeMesh.quaternion.copy( barricadeRigidBody.rotation() as THREE.Quaternion );
+
 	updateCamera( delta );
 
 } )();
@@ -270,3 +292,14 @@ const updateCamera = ( delta: number ) => {
 	renderer.render( scene, camera );
 
 } )();
+
+window.addEventListener( 'resize', function () {
+
+	const width	= window.innerWidth;
+	const height = window.innerHeight;
+
+	camera.aspect = width / height;
+	camera.updateProjectionMatrix();
+	renderer.setSize( width, height );
+
+} );
