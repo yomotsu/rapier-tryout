@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="format-detection" content="email=no,telephone=no,address=no">
+<title>=^.^=</title>
+</head>
+<body>
+
+<script type="module">
+class SoundEffect {
+
+  constructor() {
+
+    this.context = new AudioContext();
+    this.audioBuffer = null;
+
+  }
+
+  async load( url ) {
+
+    const response = await fetch( url );
+    const arrayBuffer = await response.arrayBuffer();
+    this.audioBuffer = await this.context.decodeAudioData( arrayBuffer );
+
+  }
+
+  play() {
+
+    if ( ! this.audioBuffer ) { return; }
+    const source = this.context.createBufferSource();
+    source.buffer = this.audioBuffer;
+    source.connect( this.context.destination );
+    source.start( 0 );
+
+  }
+
+}
+
+const se = new SoundEffect();
+se.load( './horn.mp3' );
+
+document.addEventListener( 'keypress', ( event ) => {
+
+  if ( event.code !== 'Enter' ) return;
+  se.play();
+
+} );
+</script>
+
+press Enter key
+</body>
+</html>

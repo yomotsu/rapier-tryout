@@ -1,0 +1,79 @@
+html {
+	font-family: sans-serif;
+}
+
+body {
+	margin: 0;
+}
+
+canvas {
+	display: block;
+	touch-action: none;
+	-webkit-user-select: none;
+	user-select: none;
+	-webkit-touch-callout: none;
+}
+
+.ButtonUp,
+.ButtonDown,
+.ButtonLeft,
+.ButtonRight,
+.ButtonBreak,
+.ButtonHorn {
+	position: absolute;
+	width: 50px;
+	height: 50px;
+	padding: 0;
+	border: 1px solid #000;
+	border-radius: 10px;
+	background-size: 100% 100%;
+	touch-action: none;
+	-webkit-user-select: none;
+	user-select: none;
+	-webkit-touch-callout: none;
+}
+
+.ButtonUp.-active,
+.ButtonDown.-active,
+.ButtonLeft.-active,
+.ButtonRight.-active,
+.ButtonBreak.-active,
+.ButtonHorn.-active {
+	opacity: .5;
+}
+
+.ButtonUp {
+	bottom: 140px;
+	right: 20px;
+	background-image: url( "/control-up.svg" );
+}
+
+.ButtonBreak {
+	bottom: 80px;
+	right: 20px;
+	background-image: url( "/control-break.svg" );
+}
+
+.ButtonDown {
+	bottom: 20px;
+	right: 20px;
+	background-image: url( "/control-down.svg" );
+}
+
+.ButtonLeft {
+	bottom: 20px;
+	left: 20px;
+	background-image: url( "/control-left.svg" );
+}
+
+.ButtonRight {
+	bottom: 20px;
+	left: 80px;
+	background-image: url( "/control-right.svg" );
+}
+
+.ButtonHorn {
+	bottom: 80px;
+	right: 80px;
+	background-image: url( "/control-horn.svg" );
+}
