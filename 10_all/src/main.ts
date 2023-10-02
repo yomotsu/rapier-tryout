@@ -22,7 +22,7 @@ const world = new RAPIER.World( gravity );
 
 const width  = window.innerWidth;
 const height = window.innerHeight;
-const clock = new THREE.Clock();
+// const clock = new THREE.Clock();
 const scene  = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera( 60, width / height, 0.01, 1000 );
 camera.position.set( 0, 1, 3 );
@@ -283,10 +283,10 @@ const updateCamera = ( delta: number ) => {
 ( function renderLoop () {
 
 	// const delta = clock.getDelta();
-	const elapsed = clock.getElapsedTime();
+	// const elapsed = clock.getElapsedTime();
 	// const hasControlsUpdated = cameraControls.update( delta );
 
-	if ( elapsed > 60 ) state.running = false;
+	// if ( elapsed > 60 ) state.running = false;
 
 	requestAnimationFrame( renderLoop );
 	renderer.render( scene, camera );
