@@ -40,19 +40,29 @@ loadEnvMap( renderer, '/env.webp' ).then( ( envMapRenderTarget ) => {
 
 } );
 
-scene.add(
-	new THREE.HemisphereLight( 0x443333, 0x332222 ),
-	new THREE.AmbientLight( 0x999999 ),
-);
-
 
 scene.add( roadMesh );
 convertToRigidBody( roadMesh, world );
 
 
+
+const groundColorMap = new THREE.TextureLoader().load( './ground-color.webp' );
+const groundNormalMap = new THREE.TextureLoader().load( './ground-normal.webp' );
+
+groundColorMap.repeat.set( 10, 5 );
+groundColorMap.wrapS = groundColorMap.wrapT = THREE.RepeatWrapping;
+groundColorMap.colorSpace = THREE.SRGBColorSpace;
+groundNormalMap.repeat.copy( groundColorMap.repeat );
+groundNormalMap.wrapS = groundNormalMap.wrapT = groundColorMap.wrapT;
+groundNormalMap.colorSpace = THREE.SRGBColorSpace;
+
 const groundMesh = new THREE.Mesh(
-	new THREE.BoxGeometry( 20, 0.1, 20 ),
-	new THREE.MeshNormalMaterial( { wireframe: false } )
+	new THREE.BoxGeometry( 40, 0.1, 20 ),
+	new THREE.MeshStandardMaterial( {
+		map: groundColorMap,
+		normalMap: groundNormalMap,
+		side: THREE.DoubleSide
+	} ),
 );
 groundMesh.quaternion.setFromAxisAngle( new THREE.Vector3( 0, 0, 1 ), 0 * THREE.MathUtils.DEG2RAD );
 scene.add( groundMesh );
@@ -69,19 +79,36 @@ groundColliderDesc.setRotation( new RAPIER.Quaternion( groundMesh.quaternion.x, 
 world.createCollider( groundColliderDesc, groundRigidBody );
 
 // barricade
+const barricadeInitialPositions = [
+	[ - 2, .4, - 8 ],
+	[ 0, .4, - 8 ],
+	[ 2, .4, - 8 ],
+];
 const barricadeMesh = ( await new GLTFLoader().loadAsync( '/barricade.glb' ) ).scene;
-scene.add( barricadeMesh );
-const barricadeRigidBodyDesc = RAPIER.RigidBodyDesc.dynamic();
-barricadeRigidBodyDesc.setTranslation( - 2, .4, -8 );
-const barricadeRigidBody = world.createRigidBody(barricadeRigidBodyDesc);
-const barricadeColliderDesc = RAPIER.ColliderDesc.cuboid(
-	1.20 / 2,
-	.8 / 2,
-	.3 / 2
-).setMass( 3 );
-barricadeColliderDesc.setTranslation( barricadeMesh.position.x, barricadeMesh.position.y, barricadeMesh.position.z );
-barricadeColliderDesc.setRotation( new RAPIER.Quaternion( barricadeMesh.quaternion.x, barricadeMesh.quaternion.y, barricadeMesh.quaternion.z, barricadeMesh.quaternion.w ) );
-world.createCollider( barricadeColliderDesc, barricadeRigidBody );
+
+const barricadeList = barricadeInitialPositions.map( ( position ) => {
+
+	const mesh = barricadeMesh.clone();
+	scene.add( mesh );
+
+	const barricadeRigidBodyDesc = RAPIER.RigidBodyDesc.dynamic();
+	barricadeRigidBodyDesc.setTranslation( position[ 0 ], position[ 1 ], position[ 2 ] );
+	const barricadeRigidBody = world.createRigidBody(barricadeRigidBodyDesc);
+	const barricadeColliderDesc = RAPIER.ColliderDesc.cuboid(
+		1.20 / 2,
+		.8 / 2,
+		.3 / 2
+	).setMass( 3 );
+	barricadeColliderDesc.setTranslation( barricadeMesh.position.x, barricadeMesh.position.y, barricadeMesh.position.z );
+	barricadeColliderDesc.setRotation( new RAPIER.Quaternion( barricadeMesh.quaternion.x, barricadeMesh.quaternion.y, barricadeMesh.quaternion.z, barricadeMesh.quaternion.w ) );
+	world.createCollider( barricadeColliderDesc, barricadeRigidBody );
+
+	return {
+		mesh,
+		body: barricadeRigidBody,
+	};
+
+} );
 
 
 const obstacleMesh = new THREE.Mesh(
@@ -227,7 +254,7 @@ const updateCamera = ( delta: number ) => {
 
 	const t = 1.0 - Math.pow( 0.01, delta );
 
-	cameraIdealOffset.set( - 4.5, .5, 0 );
+	cameraIdealOffset.set( - 4.5, .8, 0 );
 	cameraIdealOffset.applyQuaternion( chassisRotation );
 	cameraIdealOffset.add( chassisTranslation );
 
@@ -242,6 +269,22 @@ const updateCamera = ( delta: number ) => {
 
 	camera.position.copy( currentCameraPosition );
 	camera.lookAt( currentCameraLookAt );
+
+}
+console.log(raycastVehicle);
+
+
+const reset = () => {
+
+	chassisRigidBody.setTranslation( new THREE.Vector3( 0, 4, 0 ), true );
+	chassisRigidBody.setRotation( new THREE.Quaternion().setFromAxisAngle( new THREE.Vector3( 0, 1, 0 ), Math.PI / 2 ), true );
+
+	for ( let i = 0; i < raycastVehicle.wheels.length; i ++ ) {
+
+		raycastVehicle.applyEngineForce( 0, i );
+		raycastVehicle.setBrakeValue( 1000, i );
+
+	}
 
 }
 
@@ -273,8 +316,18 @@ const updateCamera = ( delta: number ) => {
 	tireRearRightMesh.quaternion.copy( raycastVehicle.wheels[3].state.worldTransform.quaternion );
 	tireRearRightMesh.position.copy( raycastVehicle.wheels[3].state.worldTransform.position );
 
-	barricadeMesh.position.copy( barricadeRigidBody.translation() as THREE.Vector3 );
-	barricadeMesh.quaternion.copy( barricadeRigidBody.rotation() as THREE.Quaternion );
+	barricadeList.forEach( ( { mesh: barricadeMesh, body: barricadeRigidBody } ) => {
+
+		barricadeMesh.position.copy( barricadeRigidBody.translation() as THREE.Vector3 );
+		barricadeMesh.quaternion.copy( barricadeRigidBody.rotation() as THREE.Quaternion );
+
+	} );
+
+	if ( carBodyMesh.position.y < - 20 ) {
+
+		reset();
+
+	}
 
 	updateCamera( delta );
 

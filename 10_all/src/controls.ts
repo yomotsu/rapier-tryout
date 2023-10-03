@@ -67,9 +67,9 @@ const buttonBreakEl = Object.assign(
 document.body.appendChild( buttonBreakEl );
 const buttonBreak = new ElementHold( buttonBreakEl );
 
-const maxForce = 100;
+const maxForce = 200;
 const maxSteer = 10;
-const maxBrake = 20;
+const maxBrake = 10;
 
 export const updateKeyInput = ( vehicle: RapierRaycastVehicle ) => {
 
